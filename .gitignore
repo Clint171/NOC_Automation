@@ -1,4 +1,5 @@
-.venv/
+venv/
 devices/
 *.json
 *.csv
+.old/
