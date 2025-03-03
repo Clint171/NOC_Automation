@@ -11,7 +11,7 @@ gauth = GoogleAuth()
 gauth.LocalWebserverAuth()
 drive = GoogleDrive(gauth)
 
-CSV_FILE = "devices/routers-prod.csv"
+CSV_FILE = "devices/routers.csv"
 
 def ping_router(ip):
     """Ping a router to check if it's reachable."""
@@ -50,7 +50,7 @@ def check_routers():
             routers.append(row)
             total_devices += 1
 
-    with open(CSV_FILE, mode="w", newline="") as file:
+    with open("devices/summary.csv", mode="w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(routers)
@@ -66,12 +66,12 @@ def check_routers():
         file.write("Devices up,"+ str(total_devices-len(down_devices))+","+str(round((total_devices-len(down_devices))*(100/total_devices), 2))+"\n")
         file.write("Devices down,"+ str(len(down_devices))+","+str(round((len(down_devices))*(100/total_devices), 2))+"\n")
 
-    print("CSV file updated successfully.")
+    print("CSV file updated successfully.\n")
     print("Summary")
     print("-------")
-    print("\nTotal devices,"+str(total_devices)+",Percentage\n")
-    print("Devices up,"+ str(total_devices-len(down_devices))+","+str(round((total_devices-len(down_devices))*(100/total_devices), 2))+"\n")
-    print("Devices down,"+ str(len(down_devices))+","+str(round((len(down_devices))*(100/total_devices), 2))+"\n")
+    print("Total devices - "+str(total_devices)+"\n")
+    print("Devices up - "+ str(total_devices-len(down_devices))+", "+str(round((total_devices-len(down_devices))*(100/total_devices), 2))+"%\n")
+    print("Devices down - "+ str(len(down_devices))+", "+str(round((len(down_devices))*(100/total_devices), 2))+"%\n")
     upload_to_drive()
 
 def upload_to_drive():
