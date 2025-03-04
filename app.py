@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
 from models import db, Region, County, Device, DeviceStatus, Comment
 from config import Config
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 from io import StringIO
-from sqlalchemy import desc
+from sqlalchemy import desc , case , func
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -158,20 +158,223 @@ def delete_region(region_id):
     return jsonify({"message": "Region deleted successfully"})
 
 # Reporting Endpoints
-@app.route('/reports/daily')
+# Helper function to calculate uptime percentage
+def calculate_uptime_percentage(statuses):
+    total_pings = len(statuses)
+    if total_pings == 0:
+        return 0.0
+    uptime_count = sum(status for status in statuses)
+    return (uptime_count / total_pings) * 100
+
+# Daily Report with Grouping
+@app.route('/reports/daily', methods=['GET'])
 def daily_report():
-    # Implement logic to generate daily report
-    return jsonify({"message": "Daily report generated"})
+    now = datetime.utcnow()
+    start_time = now - timedelta(hours=24)
 
-@app.route('/reports/monthly')
+    # Query to get hourly uptime for devices, counties, regions, and overall
+    hourly_data = db.session.query(
+        DeviceStatus.device_ip,
+        County.name.label('county_name'),
+        Region.name.label('region_name'),
+        func.date_trunc('hour', DeviceStatus.time).label('hour'),
+        DeviceStatus.status
+    ).join(Device, DeviceStatus.device_ip == Device.ip
+    ).join(County, Device.county_id == County.id, isouter=True
+    ).join(Region, County.region_id == Region.id, isouter=True
+    ).filter(DeviceStatus.time >= start_time
+    ).all()
+
+    # Organize data for devices, counties, regions, and overall
+    device_results = {}
+    county_results = {}
+    region_results = {}
+    overall_results = {}
+
+    for device_ip, county_name, region_name, hour, status in hourly_data:
+        # Device-level grouping
+        if device_ip not in device_results:
+            device_results[device_ip] = {}
+        if hour not in device_results[device_ip]:
+            device_results[device_ip][hour] = []
+        device_results[device_ip][hour].append(status)
+
+        # County-level grouping
+        if county_name:
+            if county_name not in county_results:
+                county_results[county_name] = {}
+            if hour not in county_results[county_name]:
+                county_results[county_name][hour] = []
+            county_results[county_name][hour].append(status)
+
+        # Region-level grouping
+        if region_name:
+            if region_name not in region_results:
+                region_results[region_name] = {}
+            if hour not in region_results[region_name]:
+                region_results[region_name][hour] = []
+            region_results[region_name][hour].append(status)
+
+        # Overall grouping
+        if hour not in overall_results:
+            overall_results[hour] = []
+        overall_results[hour].append(status)
+
+    # Calculate uptime percentages
+    def format_results(data):
+        formatted = {}
+        for key, hourly_statuses in data.items():
+            formatted[key] = {}
+            for hour, statuses in hourly_statuses.items():
+                formatted[key][hour.isoformat()] = calculate_uptime_percentage(statuses)
+        return formatted
+
+    return jsonify({
+        "devices": format_results(device_results),
+        "counties": format_results(county_results),
+        "regions": format_results(region_results),
+        "overall": {hour.isoformat(): calculate_uptime_percentage(statuses) for hour, statuses in overall_results.items()}
+    })
+
+# Monthly Report with Grouping
+@app.route('/reports/monthly', methods=['GET'])
 def monthly_report():
-    # Implement logic to generate monthly report
-    return jsonify({"message": "Monthly report generated"})
+    now = datetime.utcnow()
+    start_time = datetime(now.year, now.month, 1)
 
-@app.route('/reports/yearly')
+    # Query to get daily uptime for devices, counties, regions, and overall
+    daily_data = db.session.query(
+        DeviceStatus.device_ip,
+        County.name.label('county_name'),
+        Region.name.label('region_name'),
+        func.date_trunc('day', DeviceStatus.time).label('day'),
+        DeviceStatus.status
+    ).join(Device, DeviceStatus.device_ip == Device.ip
+    ).join(County, Device.county_id == County.id, isouter=True
+    ).join(Region, County.region_id == Region.id, isouter=True
+    ).filter(DeviceStatus.time >= start_time
+    ).all()
+
+    # Organize data for devices, counties, regions, and overall
+    device_results = {}
+    county_results = {}
+    region_results = {}
+    overall_results = {}
+
+    for device_ip, county_name, region_name, day, status in daily_data:
+        # Device-level grouping
+        if device_ip not in device_results:
+            device_results[device_ip] = {}
+        if day not in device_results[device_ip]:
+            device_results[device_ip][day] = []
+        device_results[device_ip][day].append(status)
+
+        # County-level grouping
+        if county_name:
+            if county_name not in county_results:
+                county_results[county_name] = {}
+            if day not in county_results[county_name]:
+                county_results[county_name][day] = []
+            county_results[county_name][day].append(status)
+
+        # Region-level grouping
+        if region_name:
+            if region_name not in region_results:
+                region_results[region_name] = {}
+            if day not in region_results[region_name]:
+                region_results[region_name][day] = []
+            region_results[region_name][day].append(status)
+
+        # Overall grouping
+        if day not in overall_results:
+            overall_results[day] = []
+        overall_results[day].append(status)
+
+    # Calculate uptime percentages
+    def format_results(data):
+        formatted = {}
+        for key, daily_statuses in data.items():
+            formatted[key] = {}
+            for day, statuses in daily_statuses.items():
+                formatted[key][day.isoformat()] = calculate_uptime_percentage(statuses)
+        return formatted
+
+    return jsonify({
+        "devices": format_results(device_results),
+        "counties": format_results(county_results),
+        "regions": format_results(region_results),
+        "overall": {day.isoformat(): calculate_uptime_percentage(statuses) for day, statuses in overall_results.items()}
+    })
+
+# Yearly Report with Grouping
+@app.route('/reports/yearly', methods=['GET'])
 def yearly_report():
-    # Implement logic to generate yearly report
-    return jsonify({"message": "Yearly report generated"})
+    now = datetime.utcnow()
+    start_time = datetime(now.year, 1, 1)
+
+    # Query to get monthly uptime for devices, counties, regions, and overall
+    monthly_data = db.session.query(
+        DeviceStatus.device_ip,
+        County.name.label('county_name'),
+        Region.name.label('region_name'),
+        func.date_trunc('month', DeviceStatus.time).label('month'),
+        DeviceStatus.status
+    ).join(Device, DeviceStatus.device_ip == Device.ip
+    ).join(County, Device.county_id == County.id, isouter=True
+    ).join(Region, County.region_id == Region.id, isouter=True
+    ).filter(DeviceStatus.time >= start_time
+    ).all()
+
+    # Organize data for devices, counties, regions, and overall
+    device_results = {}
+    county_results = {}
+    region_results = {}
+    overall_results = {}
+
+    for device_ip, county_name, region_name, month, status in monthly_data:
+        # Device-level grouping
+        if device_ip not in device_results:
+            device_results[device_ip] = {}
+        if month not in device_results[device_ip]:
+            device_results[device_ip][month] = []
+        device_results[device_ip][month].append(status)
+
+        # County-level grouping
+        if county_name:
+            if county_name not in county_results:
+                county_results[county_name] = {}
+            if month not in county_results[county_name]:
+                county_results[county_name][month] = []
+            county_results[county_name][month].append(status)
+
+        # Region-level grouping
+        if region_name:
+            if region_name not in region_results:
+                region_results[region_name] = {}
+            if month not in region_results[region_name]:
+                region_results[region_name][month] = []
+            region_results[region_name][month].append(status)
+
+        # Overall grouping
+        if month not in overall_results:
+            overall_results[month] = []
+        overall_results[month].append(status)
+
+    # Calculate uptime percentages
+    def format_results(data):
+        formatted = {}
+        for key, monthly_statuses in data.items():
+            formatted[key] = {}
+            for month, statuses in monthly_statuses.items():
+                formatted[key][month.isoformat()] = calculate_uptime_percentage(statuses)
+        return formatted
+
+    return jsonify({
+        "devices": format_results(device_results),
+        "counties": format_results(county_results),
+        "regions": format_results(region_results),
+        "overall": {month.isoformat(): calculate_uptime_percentage(statuses) for month, statuses in overall_results.items()}
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
