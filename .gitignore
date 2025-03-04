@@ -3,3 +3,4 @@ devices/
 *.json
 *.csv
 .old/
+config.py
