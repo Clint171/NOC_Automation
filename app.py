@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from models import db, Region, County, Device, DeviceStatus, Comment
 from config import Config
 from datetime import datetime, timedelta
@@ -375,6 +375,26 @@ def yearly_report():
         "regions": format_results(region_results),
         "overall": {month.isoformat(): calculate_uptime_percentage(statuses) for month, statuses in overall_results.items()}
     })
+
+# HTML
+from flask import Flask, render_template
+
+# Add these routes to serve the dashboard
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/dashboard/daily')
+def dashboard_daily():
+    return render_template('daily.html')
+
+@app.route('/dashboard/monthly')
+def dashboard_monthly():
+    return render_template('monthly.html')
+
+@app.route('/dashboard/yearly')
+def dashboard_yearly():
+    return render_template('yearly.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
