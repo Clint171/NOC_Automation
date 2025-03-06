@@ -4,20 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Report</title>
-    <link rel="favicon" href="{{ url_for('static', filename='img/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.3.0/dist/iconify-icon.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="header">
-        <div class="menu"></div>
-        <h1>Daily Uptime Report</h1>
+        <div class="menu">
+            <iconify-icon class="menu-icon" icon="ic:outline-menu" width="30" height="30" onclick="toggleMenu()"></iconify-icon>
+            <div class="menu-div">
+                <button class="x-btn"><iconify-icon icon="gg:close-o" width="24" height="24" onclick="toggleMenu()"></iconify-icon></button>
+                <a href="{{ url_for('dashboard') }}"><button class="menu-btn ">Dashboard</button></a>
+                <a href="{{ url_for('dashboard') }}"><button class="menu-btn">Internet Uptime</button></a>
+                <button class="menu-btn">Add Device</button>
+                <a href="/ping"><button class="menu-btn">Ping Devices</button></a>
+                <a href="{{ url_for('dashboard_daily') }}"><button class="menu-btn" active>Daily Report</button></a>
+                <a href="{{ url_for('dashboard_monthly') }}"><button class="menu-btn">Monthly Report</button></a>
+                <a href="{{ url_for('dashboard_yearly') }}"><button class="menu-btn">Yearly Report</button></a>
+            </div>
+        </div>
+        <h1>Daily report</h1>
     </div>
-    <h1>Daily Uptime Report</h1>
-    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
-    <div class="chart-container">
-        <canvas id="dailyChart"></canvas>
+    <div class="select-div">
+        <select id="reportArea">
+            <option value="overall" selected>Overall</option>
+            <option value="devices">Devices</option>
+            <option value="counties">Counties</option>
+            <option value="regions">Regions</option>
+        </select>
+
+        <input type="search">
+        
     </div>
-    <script src="{{ url_for('static', filename='js/daily.js') }}"></script>
+    <div class="container">
+        <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+    <script type="module" src="{{ url_for('static', filename='js/daily.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/animation.js') }}"></script>
 </body>
 </html>

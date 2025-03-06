@@ -170,7 +170,7 @@ def calculate_uptime_percentage(statuses):
 @app.route('/reports/daily', methods=['GET'])
 def daily_report():
     now = datetime.utcnow()
-    start_time = now - timedelta(hours=24)
+    start_time = now - timedelta(hours=100)
 
     # Query to get hourly uptime for devices, counties, regions, and overall
     hourly_data = db.session.query(

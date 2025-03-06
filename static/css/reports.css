@@ -70,6 +70,15 @@ h1 {
     color: #333;
 }
 
+.select-div{
+    margin: auto;
+    margin-top: 5em;
+    border: 2px solid black;
+    width: 80%;
+    padding: 1em;
+
+}
+
 .container{
     width: 100%;
     display: flex;
@@ -77,7 +86,6 @@ h1 {
     flex-wrap: wrap;
     justify-content: center;
     gap: 1em;
-    margin-top: 5em;
     margin-bottom: 1em;
 }
 
