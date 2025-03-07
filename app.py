@@ -5,6 +5,36 @@ from datetime import datetime, timedelta
 import csv
 from io import StringIO
 from sqlalchemy import desc , case , func
+from crontab import CronTab
+import os
+import subprocess
+
+# Function to set up the cron job
+def setup_cron_job():
+    # Get the absolute path to the track_uptime.py script
+    script_path = os.path.abspath("track_uptime.py")
+
+    # Initialize the cron tab for the current user
+    cron = CronTab(user=True)
+
+    # Check if the job already exists
+    job_exists = False
+    for job in cron:
+        if job.comment == "network_monitoring_uptime_tracker":
+            job_exists = True
+            break
+
+    # If the job doesn't exist, create it
+    if not job_exists:
+        job = cron.new(command=f"python3 {script_path}", comment="network_monitoring_uptime_tracker")
+        job.setall("*/30 * * * *")  # Run every 30 minutes
+        cron.write()
+        print("Cron job created successfully.")
+    else:
+        print("Cron job already exists.")
+
+# Set up the cron job when the app starts
+setup_cron_job()
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -395,6 +425,18 @@ def dashboard_monthly():
 @app.route('/dashboard/yearly')
 def dashboard_yearly():
     return render_template('yearly.html')
+
+# Ping devices route
+@app.route('/ping')
+def ping():
+    try:
+        # Run the Python script
+        subprocess.run(["python3", "track_uptime.py"], check=True)
+    except subprocess.CalledProcessError as e:
+        return f"Error running script: {e}", 500  # Handle errors gracefully
+    
+    # Render the dashboard template after execution
+    return render_template("dashboard.html")
 
 if __name__ == '__main__':
     app.run(debug=True)

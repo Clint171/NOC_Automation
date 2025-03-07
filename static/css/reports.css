@@ -73,7 +73,6 @@ h1 {
 .select-div{
     margin: auto;
     margin-top: 5em;
-    border: 2px solid black;
     width: 80%;
     padding: 1em;
 
@@ -96,7 +95,8 @@ h1 {
     border: 2px solid rgb(181, 181, 181);
     border-radius: 1em;
     padding: 1em;
-    min-width: 20em;
+    min-width: 30em;
+    width: 40%;
 }
 
 .card-clicked{

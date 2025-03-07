@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded" , async ()=>{
         data: {
             labels: deviceLabels,
             datasets: [{
-                label: 'Devices Up',
                 data: deviceUptime,
                 backgroundColor : ['rgb(54, 162, 235)','rgb(255, 99, 132)'],
                 hoverOffset: 4
