@@ -4,3 +4,4 @@ devices/
 *.csv
 .old/
 config.py
+backend/
