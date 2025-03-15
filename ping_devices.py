@@ -21,7 +21,7 @@ async def ping_device(ip):
     try:
         # Use `ping` command with a timeout of 1 second
         process = await asyncio.create_subprocess_exec(
-            "ping", "-c", "1", "-W", "2", ip,
+            "ping", "-c", "1", "-W", "1", ip,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
