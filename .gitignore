@@ -5,3 +5,4 @@ devices/
 .old/
 config.py
 backend/
+ping_log.log
